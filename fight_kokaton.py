@@ -223,7 +223,7 @@ def main():
     # bomb = Bomb((255, 0, 0), 10)
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
     explosions = []
-    beam = None
+    beams = []
     score = Score()
 
     clock = pg.time.Clock()
@@ -235,7 +235,7 @@ def main():
             
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 # ビームクラスのインスタンスを生成
-                beam = Beam(bird)
+                beams.append(Beam(bird))
         
         screen.blit(bg_img, [0, 0])
         explosions = [explosion for explosion in explosions if explosion.life > 0]
@@ -249,37 +249,36 @@ def main():
                 time.sleep(1)
                 return
         
-        if beam is not None:
-            for i, bomb in enumerate(bombs):
+        for i, bomb in enumerate(bombs):
+            for j, beam in enumerate(beams):
                 if bomb is not None and beam is not None:
                     if beam.rct.colliderect(bomb.rct):
                         # ビームが爆弾に当たる
                         bombs[i] = None
-                        beam = None
+                        beams[j] = None
                         bird.change_img(6, screen)
                         pg.display.update()
                         explosions.append(Explosion(bomb))
                         score.update(score.score + 1, screen)
 
-        for i, bomb in enumerate(bombs):
-            if beam is not None:
-                if beam.rct.colliderect(bomb.rct):
-                    # ビームが爆弾に当たる
-                    bombs[i] = None
-                    beam = None
-                    bird.change_img(6, screen)
-                    pg.display.update()
-
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
         bombs = [bomb for bomb in bombs if bomb is not None]
+        beams = [beam for beam in beams if beam is not None]
         for bomb in bombs:
             if bomb is not None:
                 bomb.update(screen)
+
+        for i, beam in enumerate(beams):
+            if beam is not None:
+                beam.update(screen)
+                if beam.rct.centerx < 0 or beam.rct.centerx > WIDTH or beam.rct.centery < 0 or beam.rct.centery > HEIGHT:
+                    beams[i] = None
+        
+        beams = [beam for beam in beams if beam is not None]
+        print(beams)
         for explosion in explosions:
             explosion.update(screen)
-        if beam is not None:
-            beam.update(screen)
 
         score.update(score.score, screen)
         pg.display.update()
