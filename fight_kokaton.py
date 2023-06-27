@@ -68,6 +68,7 @@ class Bird:
         }
         self.rct = self.bird_img.get_rect()
         self.rct.center = xy
+        self.bird_img_res = None
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -92,7 +93,10 @@ class Bird:
         self.rct.move_ip(sum_mv)
         if check_bound(self.rct) != (True, True):
             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
-        self.bird_img_res = self.bird_img_list[tuple(sum_mv)]
+        if not (sum_mv[0] == 0 and sum_mv[1] == 0):
+            self.bird_img_res = self.bird_img_list[tuple(sum_mv)]
+        elif self.bird_img_res == None:
+            self.bird_img_res = self.bird_img_list[(+5, 0)]
         screen.blit(self.bird_img_res, self.rct)
 
 
