@@ -40,15 +40,33 @@ class Bird:
         引数1 num：こうかとん画像ファイル名の番号
         引数2 xy：こうかとん画像の位置座標タプル
         """
-        self.img = pg.transform.flip(  # 左右反転
-            pg.transform.rotozoom(  # 2倍に拡大
-                pg.image.load(f"ex03/fig/{num}.png"), 
-                0, 
-                2.0), 
-            True, 
-            False
+        self.bird_img = pg.transform.rotozoom(
+            pg.image.load("ex02/fig/3.png"), 
+            0, 
+            2.0
         )
-        self.rct = self.img.get_rect()
+        self.bird_img_reverse = pg.transform.rotozoom(
+            pg.transform.flip(
+                pg.image.load("ex02/fig/3.png"),
+                False,
+                True
+            ), 
+            0, 
+            2.0
+        )
+        self.bird_img_list = {  # 8方向のこうかとんの辞書
+            (0, -5): pg.transform.rotozoom(self.bird_img, -90, 1.0),
+            (5, -5): pg.transform.rotozoom(self.bird_img_reverse, 225, 1.0),
+            (5, 0): pg.transform.rotozoom(self.bird_img_reverse, 180, 1.0),
+            (5, 5): pg.transform.rotozoom(self.bird_img_reverse, 135, 1.0),
+            (0, 5): pg.transform.rotozoom(self.bird_img, 90, 1.0),
+            (-5, 5): pg.transform.rotozoom(self.bird_img, 45, 1.0),
+            (-5, 0): pg.transform.rotozoom(self.bird_img, 0, 1.0),
+            (0, 0): pg.transform.rotozoom(self.bird_img, 0, 1.0),
+            (-5, -5): pg.transform.rotozoom(self.bird_img, -45, 1.0),
+            (0, 0): pg.transform.rotozoom(self.bird_img_reverse, 180, 1.0),
+        }
+        self.rct = self.bird_img.get_rect()
         self.rct.center = xy
 
     def change_img(self, num: int, screen: pg.Surface):
@@ -74,7 +92,8 @@ class Bird:
         self.rct.move_ip(sum_mv)
         if check_bound(self.rct) != (True, True):
             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
-        screen.blit(self.img, self.rct)
+        self.bird_img_res = self.bird_img_list[tuple(sum_mv)]
+        screen.blit(self.bird_img_res, self.rct)
 
 
 class Bomb:
