@@ -174,6 +174,10 @@ class Beam:
 
 
 class Explosion:
+    """
+    ビームが爆弾に当たったときの爆発を描画する
+    引数1 bomb：爆弾のSurface
+    """
     def __init__(self, bomb: Bomb):
         self.explosion_img = pg.image.load("ex03/fig/explosion.gif")
         self.explosion_list = [
@@ -191,6 +195,25 @@ class Explosion:
         screen.blit(self.explosion_list[self.life % 4], self.rct)
 
 
+class Score:
+    """
+    スコアを表示する
+    引数1 bird：こうかとん画像の位置座標タプル
+    """
+    def __init__(self):
+        self.font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)
+        self.color = (0, 0, 255)
+        self.score = 0
+        self.img = self.font.render("スコア : " + str(self.score), 0, self.color)
+        self.rct = self.img.get_rect()
+        self.rct.centerx = 100
+        self.rct.centery = HEIGHT - 50
+
+    def update(self, score: int, screen: pg.Surface):
+        self.score = score
+        self.img = self.font.render("スコア : " + str(self.score), 0, self.color)
+        screen.blit(self.img, self.rct)
+
 
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
@@ -201,6 +224,7 @@ def main():
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
     explosions = []
     beam = None
+    score = Score()
 
     clock = pg.time.Clock()
     tmr = 0
@@ -235,6 +259,7 @@ def main():
                         bird.change_img(6, screen)
                         pg.display.update()
                         explosions.append(Explosion(bomb))
+                        score.update(score.score + 1, screen)
 
         for i, bomb in enumerate(bombs):
             if beam is not None:
@@ -256,6 +281,7 @@ def main():
         if beam is not None:
             beam.update(screen)
 
+        score.update(score.score, screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
