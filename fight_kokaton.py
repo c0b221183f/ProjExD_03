@@ -269,7 +269,7 @@ def main():
             if bomb is not None:
                 bomb.update(screen)
 
-        for i, beam in enumerate(beams):
+        for i, beam in enumerate(beams):  # beamsの要素を1つ1つ取り出す。ついでにindexも取得する 
             if beam is not None:
                 beam.update(screen)
                 if beam.rct.centerx < 0 or beam.rct.centerx > WIDTH or beam.rct.centery < 0 or beam.rct.centery > HEIGHT:
