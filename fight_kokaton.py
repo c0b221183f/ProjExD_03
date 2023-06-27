@@ -1,6 +1,7 @@
 import random
 import sys
 import time
+import math
 
 import pygame as pg
 
@@ -70,6 +71,7 @@ class Bird:
         self.rct = self.bird_img.get_rect()
         self.rct.center = xy
         self.bird_img_res = None
+        self.dire = (+5, 0)
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -98,6 +100,8 @@ class Bird:
             self.bird_img_res = self.bird_img_list[tuple(sum_mv)]
         elif self.bird_img_res == None:
             self.bird_img_res = self.bird_img_list[(+5, 0)]
+
+        self.dire = (sum_mv[0], sum_mv[1])
         screen.blit(self.bird_img_res, self.rct)
 
 
@@ -136,16 +140,29 @@ class Beam:
     """
     ビームに関するクラス
     """
+    last_angle_x = +5
+    last_angle_y = 0
+
     def __init__(self, bird: Bird):
         """
         ビーム画像Surfaceを生成する
-        引数1 xy：こうかとん画像の位置座標タプル
+        引数1 bird：こうかとん画像の位置座標タプル
         """
         self.img = pg.image.load(f"ex03/fig/beam.png")
         self.rct = self.img.get_rect()
-        self.rct.centerx = bird.rct.centerx + ( bird.rct.width / 2 ) + ( self.rct.width / 2 )
-        self.rct.centery = bird.rct.centery
-        self.vx, self.vy = +5, 0
+        vx, vy = bird.dire[0], bird.dire[1]
+        if not (vx == 0 and vy == 0):
+            self.vx, self.vy = vx, vy
+            self.last_angle_x = vx
+            self.last_angle_y = vy
+        else:
+            self.vx, self.vy = self.last_angle_x, self.last_angle_y
+            
+        angle = math.atan2(-vy, vx)
+        self.img = pg.transform.rotozoom(self.img, math.degrees(angle), 1.0)
+        self.rct.centerx = bird.rct.centerx + bird.rct.width * self.vx / 5
+        self.rct.centery = bird.rct.centery + bird.rct.height * self.vy / 5
+
         
     def update(self, screen: pg.Surface):
         """
@@ -156,6 +173,25 @@ class Beam:
         screen.blit(self.img, self.rct)
 
 
+class Explosion:
+    def __init__(self, bomb: Bomb):
+        self.explosion_img = pg.image.load("ex03/fig/explosion.gif")
+        self.explosion_list = [
+            pg.transform.flip(self.explosion_img, True, True),
+            pg.transform.flip(self.explosion_img, True, False),
+            pg.transform.flip(self.explosion_img, False, True),
+            pg.transform.flip(self.explosion_img, False, False)
+        ]
+        self.rct = self.explosion_img.get_rect()
+        self.rct.center = bomb.rct.center
+        self.life = 30
+    
+    def update(self, screen: pg.Surface):
+        self.life -= 1
+        screen.blit(self.explosion_list[self.life % 4], self.rct)
+
+
+
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
@@ -163,6 +199,7 @@ def main():
     bird = Bird(3, (900, 400))
     # bomb = Bomb((255, 0, 0), 10)
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
+    explosions = []
     beam = None
 
     clock = pg.time.Clock()
@@ -177,6 +214,8 @@ def main():
                 beam = Beam(bird)
         
         screen.blit(bg_img, [0, 0])
+        explosions = [explosion for explosion in explosions if explosion.life > 0]
+
         
         for bomb in bombs:
             if bird.rct.colliderect(bomb.rct):
@@ -186,6 +225,17 @@ def main():
                 time.sleep(1)
                 return
         
+        if beam is not None:
+            for i, bomb in enumerate(bombs):
+                if bomb is not None and beam is not None:
+                    if beam.rct.colliderect(bomb.rct):
+                        # ビームが爆弾に当たる
+                        bombs[i] = None
+                        beam = None
+                        bird.change_img(6, screen)
+                        pg.display.update()
+                        explosions.append(Explosion(bomb))
+
         for i, bomb in enumerate(bombs):
             if beam is not None:
                 if beam.rct.colliderect(bomb.rct):
@@ -201,6 +251,8 @@ def main():
         for bomb in bombs:
             if bomb is not None:
                 bomb.update(screen)
+        for explosion in explosions:
+            explosion.update(screen)
         if beam is not None:
             beam.update(screen)
 
